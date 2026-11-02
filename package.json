@@ -1,0 +1,40 @@
+{
+  "name": "impression-ledger",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Viewable-impression counting for streaming text ads, and idempotent ingestion of ad events into PostgreSQL",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "build:web": "vite build --config web/vite.config.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p test/tsconfig.json && tsc -p web/tsconfig.json",
+    "migrate": "node dist/scripts/migrate.js",
+    "recompute": "node dist/scripts/recompute.js",
+    "start": "node dist/src/main.js",
+    "seed-demo": "node dist/scripts/seed-demo.js",
+    "test": "vitest run",
+    "drill": "node dist/scripts/fault-drill.js",
+    "drill:summary": "node dist/scripts/summarize-drills.js"
+  },
+  "dependencies": {
+    "pg": "^8.23.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.0",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.2.0",
+    "fast-check": "^4.10.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  }
+}
