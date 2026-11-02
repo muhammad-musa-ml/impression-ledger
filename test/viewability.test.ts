@@ -59,6 +59,26 @@ describe('the rule', () => {
     expect(evaluate(visibleLast, firstToken).counted).toBe(true);
   });
 
+  it('does not end a stretch because of a sample that is replaced at the same instant', () => {
+    // In view from 0 to 1100. At 600 a hidden sample is followed at once by a visible one, so the ad
+    // was never hidden for any length of time.
+    const events = [ft(0), vis(0, 1), { ...vis(600, 0), seq: 20 }, { ...vis(600, 1), seq: 21 }, vis(1100, 0), end(1500)];
+    const v = evaluate(events, firstToken);
+    expect(v.counted).toBe(true);
+    expect(v.countedAtMs).toBe(1000);
+    expect(v.longestRunMs).toBe(1100);
+  });
+
+  it('takes the lower fraction when two samples share both time and sequence number', () => {
+    // The client contradicts itself; the counter does not give it the benefit of the doubt, and the
+    // answer does not depend on which sample arrived first.
+    const a = { ...vis(600, 1), seq: 20 };
+    const b = { ...vis(600, 0), seq: 20 };
+    const rest = [ft(0), vis(0, 1), vis(1100, 0), end(1500)];
+    expect(evaluate([...rest, a, b], firstToken).counted).toBe(false);
+    expect(evaluate([...rest, b, a], firstToken).counted).toBe(false);
+  });
+
   it('does not count a view that never saw its timer start event', () => {
     const v = evaluate([vis(0, 1), end(5000)], firstToken);
     expect(v).toEqual({ counted: false, countedAtMs: null, timerStartMs: null, longestRunMs: 0 });

@@ -21,7 +21,7 @@ export function referenceVerdict(
   const horizon = Math.max(...events.map((e) => e.tsMs));
   const samples = events
     .filter((e) => e.type === 'visibility')
-    .sort((a, b) => a.tsMs - b.tsMs || a.seq - b.seq || (a.visibleFraction ?? 0) - (b.visibleFraction ?? 0));
+    .sort((a, b) => a.tsMs - b.tsMs || a.seq - b.seq || (b.visibleFraction ?? 0) - (a.visibleFraction ?? 0));
 
   let streak = 0;
   for (let t = start; t < horizon; t++) {

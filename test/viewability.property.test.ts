@@ -3,8 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { evaluate, type EventType, type Strategy, type ViewEvent } from '../src/viewability.js';
 import { referenceVerdict } from './reference.js';
 
-const MAX_TS = 2500;
 const FRACTIONS = [0, 0.2, 0.49, 0.5, 0.51, 0.9, 1];
+
+/** FC_RUNS=<n> raises every run count to at least n, for a one-off wider sweep. */
+const runs = (n: number): number => Math.max(n, Number(process.env['FC_RUNS'] ?? 0));
 
 const strategyArb: fc.Arbitrary<Strategy> = fc.record({
   name: fc.constant('s'),
@@ -13,25 +15,46 @@ const strategyArb: fc.Arbitrary<Strategy> = fc.record({
   minVisibleMs: fc.integer({ min: 1, max: 600 }),
 });
 
-const markerArb = (type: EventType): fc.Arbitrary<ViewEvent> =>
-  fc.record({ type: fc.constant(type), tsMs: fc.integer({ min: 0, max: MAX_TS }), seq: fc.nat(40) });
+// Short rules, to go with the packed views below.
+const shortStrategyArb: fc.Arbitrary<Strategy> = fc.record({
+  name: fc.constant('s'),
+  timerStart: fc.constantFrom('first-token' as const, 'fully-rendered' as const),
+  threshold: fc.constantFrom(0.3, 0.5, 0.75, 1),
+  minVisibleMs: fc.integer({ min: 1, max: 40 }),
+});
 
+/**
+ * A view: markers (any of them may be missing or repeated) and a pile of samples, in any order.
+ * Times run from 0 to maxTs and sequence numbers from 0 to maxSeq, so a small maxTs and maxSeq
+ * packs many samples into the same millisecond and gives some of them the same sequence number.
+ */
+const viewArbOf = (maxTs: number, maxSeq: number): fc.Arbitrary<ViewEvent[]> => {
+  const marker = (type: EventType): fc.Arbitrary<ViewEvent> =>
+    fc.record({ type: fc.constant(type), tsMs: fc.integer({ min: 0, max: maxTs }), seq: fc.nat(maxSeq) });
+  const sample: fc.Arbitrary<ViewEvent> = fc.record({
+    type: fc.constant<EventType>('visibility'),
+    tsMs: fc.integer({ min: 0, max: maxTs }),
+    seq: fc.nat(maxSeq),
+    visibleFraction: fc.constantFrom(...FRACTIONS),
+  });
+  return fc
+    .tuple(
+      fc.array(marker('first_token'), { maxLength: 2 }),
+      fc.array(marker('render_complete'), { maxLength: 2 }),
+      fc.array(marker('view_end'), { maxLength: 1 }),
+      fc.array(sample, { maxLength: 25 }),
+    )
+    .chain((parts) => fc.shuffledSubarray(parts.flat(), { minLength: parts.flat().length }));
+};
+
+const viewArb = viewArbOf(2500, 40);
+const packedViewArb = viewArbOf(60, 3);
 const sampleArb: fc.Arbitrary<ViewEvent> = fc.record({
   type: fc.constant<EventType>('visibility'),
-  tsMs: fc.integer({ min: 0, max: MAX_TS }),
+  tsMs: fc.integer({ min: 0, max: 2500 }),
   seq: fc.nat(40),
   visibleFraction: fc.constantFrom(...FRACTIONS),
 });
-
-/** A view: markers (any of them may be missing or repeated) and a pile of samples, in any order. */
-const viewArb: fc.Arbitrary<ViewEvent[]> = fc
-  .tuple(
-    fc.array(markerArb('first_token'), { maxLength: 2 }),
-    fc.array(markerArb('render_complete'), { maxLength: 2 }),
-    fc.array(markerArb('view_end'), { maxLength: 1 }),
-    fc.array(sampleArb, { maxLength: 25 }),
-  )
-  .chain((parts) => fc.shuffledSubarray(parts.flat(), { minLength: parts.flat().length }));
 
 const horizon = (events: readonly ViewEvent[]): number => Math.max(0, ...events.map((e) => e.tsMs));
 
@@ -45,37 +68,42 @@ describe('properties of the counter', () => {
     expect(verdicts.length - counted).toBeGreaterThan(40);
   });
 
-  it('agrees with a millisecond-by-millisecond reference', () => {
+  const families = [
+    { name: 'spread over 2.5 s', views: viewArb, strategies: strategyArb },
+    { name: 'packed into 60 ms, with repeated sequence numbers', views: packedViewArb, strategies: shortStrategyArb },
+  ] as const;
+
+  it.each(families)('agrees with a millisecond-by-millisecond reference: $name', ({ views, strategies }) => {
     fc.assert(
-      fc.property(viewArb, strategyArb, (events, s) => {
+      fc.property(views, strategies, (events, s) => {
         const real = evaluate(events, s);
         const ref = referenceVerdict(events, s);
         expect({ counted: real.counted, countedAtMs: real.countedAtMs }).toEqual(ref);
       }),
-      { numRuns: 1500 },
+      { numRuns: runs(1500) },
     );
   });
 
-  it('does not depend on the order the events arrive in', () => {
+  it.each(families)('does not depend on the order the events arrive in: $name', ({ views, strategies }) => {
     fc.assert(
-      fc.property(viewArb, strategyArb, fc.nat(), (events, s, salt) => {
+      fc.property(views, strategies, fc.nat(), (events, s, salt) => {
         const rotated = events.slice(salt % (events.length + 1)).concat(events.slice(0, salt % (events.length + 1)));
         const reversed = [...events].reverse();
         const base = evaluate(events, s);
         expect(evaluate(rotated, s)).toEqual(base);
         expect(evaluate(reversed, s)).toEqual(base);
       }),
-      { numRuns: 800 },
+      { numRuns: runs(800) },
     );
   });
 
-  it('does not change when events are delivered more than once', () => {
+  it.each(families)('does not change when events are delivered more than once: $name', ({ views, strategies }) => {
     fc.assert(
-      fc.property(viewArb, strategyArb, fc.nat(), (events, s, salt) => {
+      fc.property(views, strategies, fc.nat(), (events, s, salt) => {
         const some = events.filter((_, i) => (i + salt) % 3 === 0);
         expect(evaluate([...events, ...some, ...events], s)).toEqual(evaluate(events, s));
       }),
-      { numRuns: 800 },
+      { numRuns: runs(800) },
     );
   });
 
@@ -94,12 +122,12 @@ describe('properties of the counter', () => {
         for (let t = v.countedAtMs! - s.minVisibleMs; t < v.countedAtMs!; t++) {
           const inEffect = events
             .filter((e) => e.type === 'visibility' && e.tsMs <= t)
-            .sort((a, b) => a.tsMs - b.tsMs || a.seq - b.seq || a.visibleFraction! - b.visibleFraction!)
+            .sort((a, b) => a.tsMs - b.tsMs || a.seq - b.seq || b.visibleFraction! - a.visibleFraction!)
             .at(-1);
           expect(inEffect?.visibleFraction ?? 0).toBeGreaterThanOrEqual(s.threshold);
         }
       }),
-      { numRuns: 400 },
+      { numRuns: runs(400) },
     );
   });
 
@@ -112,7 +140,7 @@ describe('properties of the counter', () => {
         if (evaluate(events, harderThreshold).counted) expect(base).toBe(true);
         if (evaluate(events, longer).counted) expect(base).toBe(true);
       }),
-      { numRuns: 800 },
+      { numRuns: runs(800) },
     );
   });
 
@@ -129,7 +157,7 @@ describe('properties of the counter', () => {
         if (late.counted) expect(early.counted).toBe(true);
         if (late.counted && early.counted) expect(early.countedAtMs!).toBeLessThanOrEqual(late.countedAtMs!);
       }),
-      { numRuns: 800 },
+      { numRuns: runs(800) },
     );
   });
 
@@ -145,7 +173,7 @@ describe('properties of the counter', () => {
           expect(after.countedAtMs).toBe(before.countedAtMs);
         }
       }),
-      { numRuns: 800 },
+      { numRuns: runs(800) },
     );
   });
 });
