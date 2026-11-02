@@ -164,6 +164,8 @@ describe.skipIf(!available)('concurrency', () => {
     expect(check.problems).toEqual([]);
     expect(check.pass).toBe(true);
     expect(results.reduce((n, r) => n + r.accepted, 0)).toBe(dataset.events.length);
+    // Locking views in id order means two batches never wait on each other in a circle.
+    expect(results.reduce((n, r) => n + r.retries, 0)).toBe(0);
   });
 });
 

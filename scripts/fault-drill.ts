@@ -446,7 +446,8 @@ async function runOnce(index: number, seed: number, opts: Options): Promise<Reco
     probes.every((p) => p.pass) &&
     server.unexpectedExits === 0 &&
     stats.conflicts === 0 &&
-    stats.rejected === 0;
+    stats.rejected === 0 &&
+    stats.deadlockRetries === 0;
   return {
     run: index,
     seed,
