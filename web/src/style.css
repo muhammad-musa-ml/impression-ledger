@@ -1,0 +1,117 @@
+:root {
+  color-scheme: light dark;
+  --fg: #1c1e21;
+  --muted: #5b6168;
+  --line: #d5d9de;
+  --bg: #ffffff;
+  --accent: #1a56b8;
+  --error: #a4262c;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fg: #e6e8eb;
+    --muted: #a0a7b0;
+    --line: #3a3f46;
+    --bg: #15171a;
+    --accent: #7aa7f0;
+    --error: #f08a8f;
+  }
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+main {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem;
+}
+h1 {
+  font-size: 1.4rem;
+  margin: 0 0 1rem;
+}
+form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: end;
+  margin-bottom: 1.25rem;
+}
+label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+input {
+  min-width: 17rem;
+  padding: 0.4rem 0.5rem;
+  font: inherit;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+button {
+  padding: 0.4rem 0.9rem;
+  font: inherit;
+  color: var(--bg);
+  background: var(--accent);
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+caption {
+  text-align: left;
+  color: var(--muted);
+  padding-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+th,
+td {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+th[scope='col'] {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+tbody th {
+  font-weight: 500;
+}
+tfoot th,
+tfoot td {
+  font-weight: 600;
+  border-bottom: 0;
+  border-top: 2px solid var(--line);
+}
+.num {
+  text-align: right;
+}
+.rules {
+  margin: 1rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.error {
+  color: var(--error);
+}
+.note {
+  margin-top: 2rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
