@@ -1,0 +1,147 @@
+{
+  "code": {
+    "commit": "f8a643ea38878c8178ce90b35d653830bf040f51",
+    "dirty": false
+  },
+  "fcSeed": 1,
+  "rows": [
+    {
+      "id": "baseline",
+      "file": "-",
+      "defect": "none",
+      "caughtBy": "unit: pass",
+      "detail": "36 tests passed"
+    },
+    {
+      "id": "baseline",
+      "file": "-",
+      "defect": "none",
+      "caughtBy": "integration: pass",
+      "detail": "24 tests passed"
+    },
+    {
+      "id": "baseline",
+      "file": "-",
+      "defect": "none",
+      "caughtBy": "drill: pass",
+      "detail": "PASS: 9494/9494 events, gaps 0, extra 0, duplicates 0, verdict mismatches 0; kills 4 (1 before COMMIT with an open transaction, 2 after COMMIT), failed attempts 108, committed under a lost reply 409, probes ok/ok"
+    },
+    {
+      "id": "baseline",
+      "file": "-",
+      "defect": "none",
+      "caughtBy": "integration, repeated",
+      "detail": "0 of 10 further runs failed",
+      "repeats": {
+        "runs": 10,
+        "failed": 0
+      }
+    },
+    {
+      "id": "V1",
+      "file": "src/viewability.ts",
+      "defect": "the threshold is exclusive: exactly 50% in view does not count",
+      "caughtBy": "unit",
+      "detail": "4 failed: the synthetic scenarios are counted as designed under both rules | properties of the counter agrees with a millisecond-by-millisecond reference: spread over 2.5 s"
+    },
+    {
+      "id": "V2",
+      "file": "src/viewability.ts",
+      "defect": "the duration is exclusive: exactly one second does not count",
+      "caughtBy": "unit",
+      "detail": "4 failed: properties of the counter agrees with a millisecond-by-millisecond reference: spread over 2.5 s | properties of the counter agrees with a millisecond-by-millisecond reference: packed into 60 ms, with repeated sequen…"
+    },
+    {
+      "id": "V3",
+      "file": "src/viewability.ts",
+      "defect": "time in view before the timer start is credited, so the timer start rule has no effect",
+      "caughtBy": "unit",
+      "detail": "7 failed: the synthetic scenarios are counted as designed under both rules | properties of the counter agrees with a millisecond-by-millisecond reference: spread over 2.5 s"
+    },
+    {
+      "id": "V4",
+      "file": "src/viewability.ts",
+      "defect": "a break below the threshold does not reset the run, so flickering ads are counted",
+      "caughtBy": "unit",
+      "detail": "11 failed: the synthetic scenarios are counted as designed under both rules | properties of the counter agrees with a millisecond-by-millisecond reference: spread over 2.5 s"
+    },
+    {
+      "id": "V5",
+      "file": "src/viewability.ts",
+      "defect": "events are not sorted, so the result depends on arrival order",
+      "caughtBy": "unit",
+      "detail": "11 failed: properties of the counter agrees with a millisecond-by-millisecond reference: spread over 2.5 s | properties of the counter agrees with a millisecond-by-millisecond reference: packed into 60 ms, with repeated sequen…"
+    },
+    {
+      "id": "V6",
+      "file": "src/viewability.ts",
+      "defect": "a sample that is replaced at the same instant still ends the stretch it interrupts",
+      "caughtBy": "unit",
+      "detail": "2 failed: properties of the counter agrees with a millisecond-by-millisecond reference: packed into 60 ms, with repeated sequen… | the rule does not end a stretch because of a sample that is replaced at the same instant"
+    },
+    {
+      "id": "V7",
+      "file": "src/viewability.ts",
+      "defect": "of two samples with the same time and sequence number, the higher fraction wins",
+      "caughtBy": "unit",
+      "detail": "2 failed: properties of the counter agrees with a millisecond-by-millisecond reference: packed into 60 ms, with repeated sequen… | the rule takes the lower fraction when two samples share both time and sequence number"
+    },
+    {
+      "id": "I1",
+      "file": "src/ingest.ts",
+      "defect": "the ad_views rows are not locked, so batches of the same view run side by side",
+      "caughtBy": "integration",
+      "detail": "1 failed: concurrency gets the right answer when batches of the same views arrive together in opposite orders (10 of 10 further runs of the database tests failed)",
+      "repeats": {
+        "runs": 10,
+        "failed": 10
+      }
+    },
+    {
+      "id": "I2",
+      "file": "src/ingest.ts",
+      "defect": "view rows are created in the order the batch lists them, not in id order",
+      "caughtBy": "integration",
+      "detail": "1 failed: concurrency gets the right answer when batches of the same views arrive together in opposite orders (10 of 10 further runs of the database tests failed)",
+      "repeats": {
+        "runs": 10,
+        "failed": 10
+      }
+    },
+    {
+      "id": "I3",
+      "file": "src/ingest.ts",
+      "defect": "no transaction: every statement commits on its own",
+      "caughtBy": "integration",
+      "detail": "1 failed: atomicity leaves nothing behind when the transaction does not reach COMMIT"
+    },
+    {
+      "id": "I4",
+      "file": "src/ingest.ts",
+      "defect": "the event insert has no ON CONFLICT clause",
+      "caughtBy": "integration",
+      "detail": "6 failed: HTTP API accepts a batch, says so again as duplicates on a retry, and reports the count | ingestion stores nothing the second time the same batch arrives"
+    },
+    {
+      "id": "I5",
+      "file": "src/ingest.ts",
+      "defect": "events are stored under one shared tenant, so the idempotency key is not tenant-scoped",
+      "caughtBy": "integration",
+      "detail": "17 failed: HTTP API accepts a batch, says so again as duplicates on a retry, and reports the count | HTTP API shows each tenant only its own ads"
+    },
+    {
+      "id": "I6",
+      "file": "src/ingest.ts",
+      "defect": "an event id that comes back with different content is counted as a duplicate, not a conflict",
+      "caughtBy": "integration",
+      "detail": "1 failed: ingestion keeps the first version of an event id that comes back with different content"
+    },
+    {
+      "id": "I7",
+      "file": "src/ingest.ts",
+      "defect": "a view's verdict is computed from the events of this batch only, not from all stored events of the view",
+      "caughtBy": "integration",
+      "detail": "4 failed: ingestion gives the same verdicts however the events of a view are split, ordered and repeated | concurrency gets the right answer when batches of the same views arrive together in opposite orders"
+    }
+  ]
+}
