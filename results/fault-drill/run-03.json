@@ -1,0 +1,141 @@
+{
+  "run": 3,
+  "seed": 103,
+  "pass": true,
+  "startedAt": "2026-11-02T23:32:07.414Z",
+  "durationSeconds": 27.5,
+  "code": {
+    "commit": "0221f18bf08b16934263ebcf0bdb4c4b5ac33c47",
+    "dirty": false
+  },
+  "machine": {
+    "platform": "win32",
+    "release": "10.0.26200",
+    "arch": "x64",
+    "logicalCpus": 24,
+    "node": "v22.17.0",
+    "postgres": "17.11"
+  },
+  "settings": {
+    "tenants": 2,
+    "viewsPerTenant": 800,
+    "batchSize": 100,
+    "concurrency": 8,
+    "holdBeforeCommitMs": 80,
+    "holdAfterCommitMs": 80,
+    "duplicateShare": 0.25,
+    "replayShare": 0.1,
+    "killsRequested": 6
+  },
+  "delivery": {
+    "distinctEvents": 25556,
+    "deliveries": 37052,
+    "duplicateDeliveries": 11496,
+    "batches": 372,
+    "replayedBatches": 52
+  },
+  "faults": {
+    "kills": 6,
+    "killsBeforeCommit": 3,
+    "killsBeforeCommitWithOpenTransaction": 3,
+    "killsAfterCommit": 3,
+    "killsAfterCommitWithCommitLogged": 3,
+    "killPoints": [
+      {
+        "window": "before-commit",
+        "afterBatchesAcked": 54,
+        "evidence": 1
+      },
+      {
+        "window": "after-commit",
+        "afterBatchesAcked": 107,
+        "evidence": 2
+      },
+      {
+        "window": "before-commit",
+        "afterBatchesAcked": 159,
+        "evidence": 1
+      },
+      {
+        "window": "after-commit",
+        "afterBatchesAcked": 213,
+        "evidence": 2
+      },
+      {
+        "window": "before-commit",
+        "afterBatchesAcked": 265,
+        "evidence": 2
+      },
+      {
+        "window": "after-commit",
+        "afterBatchesAcked": 319,
+        "evidence": 1
+      }
+    ],
+    "unexpectedServerExits": 0,
+    "failedAttempts": 192,
+    "totalAttempts": 564,
+    "probes": [
+      {
+        "window": "before-commit",
+        "killedInWindow": true,
+        "eventsSent": 87,
+        "eventsStoredAfterKill": 0,
+        "verdictRowsAfterKill": 0,
+        "eventsStoredAfterResend": 87,
+        "acceptedOnResend": 87,
+        "duplicatesOnResend": 0,
+        "eventsStoredAfterSecondResend": 87,
+        "acceptedOnSecondResend": 0,
+        "pass": true
+      },
+      {
+        "window": "after-commit",
+        "killedInWindow": true,
+        "eventsSent": 87,
+        "eventsStoredAfterKill": 87,
+        "verdictRowsAfterKill": 12,
+        "eventsStoredAfterResend": 87,
+        "acceptedOnResend": 0,
+        "duplicatesOnResend": 87,
+        "eventsStoredAfterSecondResend": 87,
+        "acceptedOnSecondResend": 0,
+        "pass": true
+      }
+    ]
+  },
+  "server": {
+    "batchesAcked": 372,
+    "acceptedInAckedResponses": 24920,
+    "duplicatesInAckedResponses": 12132,
+    "committedUnderLostReply": 636,
+    "conflicts": 0,
+    "rejected": 0,
+    "deadlockRetries": 0
+  },
+  "result": {
+    "tenants": [
+      "alpha",
+      "bravo"
+    ],
+    "eventsExpected": 25556,
+    "eventsStored": 25556,
+    "gaps": 0,
+    "extra": 0,
+    "semanticDuplicates": 0,
+    "viewsExpected": 1600,
+    "viewVerdictMismatches": 0,
+    "reportMismatches": 0,
+    "derivedStateMismatches": 0,
+    "pass": true,
+    "problems": []
+  },
+  "report": {
+    "views": 1600,
+    "counted": {
+      "first-token": 987,
+      "fully-rendered": 559
+    },
+    "viewsWhereTheRulesDisagree": 428
+  }
+}

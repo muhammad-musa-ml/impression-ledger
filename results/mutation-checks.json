@@ -1,6 +1,6 @@
 {
   "code": {
-    "commit": "f8a643ea38878c8178ce90b35d653830bf040f51",
+    "commit": "0221f18bf08b16934263ebcf0bdb4c4b5ac33c47",
     "dirty": false
   },
   "fcSeed": 1,
@@ -24,7 +24,7 @@
       "file": "-",
       "defect": "none",
       "caughtBy": "drill: pass",
-      "detail": "PASS: 9494/9494 events, gaps 0, extra 0, duplicates 0, verdict mismatches 0; kills 4 (1 before COMMIT with an open transaction, 2 after COMMIT), failed attempts 108, committed under a lost reply 409, probes ok/ok"
+      "detail": "PASS: 9494/9494 events, gaps 0, extra 0, duplicates 0, verdict mismatches 0; kills 4 (2 before COMMIT with an open transaction, 2 after COMMIT), failed attempts 128, committed under a lost reply 295, probes ok/ok"
     },
     {
       "id": "baseline",
