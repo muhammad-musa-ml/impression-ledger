@@ -9,11 +9,13 @@ export interface Config {
   strategies: Strategy[];
   poolMax: number;
   /**
-   * Fault-injection hook for the crash drill. When above zero, every ingest
-   * transaction waits this long after its writes and before COMMIT, and logs a
-   * line when it opens and when it ends. Leave it at 0 outside the drill.
+   * Fault-injection hooks for the crash drill. When above zero, every ingest
+   * transaction waits this long after its writes and before COMMIT, and the
+   * reply waits this long after COMMIT. Both log a line when a transaction
+   * opens and when it ends. Leave them at 0 outside the drill.
    */
   holdBeforeCommitMs: number;
+  holdAfterCommitMs: number;
   logRequests: boolean;
   webRoot: string;
 }
@@ -61,6 +63,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     strategies,
     poolMax: num('PG_POOL_MAX', env['PG_POOL_MAX'], 10),
     holdBeforeCommitMs: num('FAULT_HOLD_BEFORE_COMMIT_MS', env['FAULT_HOLD_BEFORE_COMMIT_MS'], 0),
+    holdAfterCommitMs: num('FAULT_HOLD_AFTER_COMMIT_MS', env['FAULT_HOLD_AFTER_COMMIT_MS'], 0),
     logRequests: env['LOG_REQUESTS'] !== '0',
     webRoot: env['WEB_ROOT'] ?? 'web/dist',
   };

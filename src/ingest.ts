@@ -27,6 +27,8 @@ export interface IngestOptions {
   strategies: readonly Strategy[];
   /** Fault-injection hook: wait this long between the last write and COMMIT. */
   holdBeforeCommitMs?: number;
+  /** Fault-injection hook: wait this long after COMMIT before returning, so the reply is late. */
+  holdAfterCommitMs?: number;
   onTxnOpen?: (info: TxnInfo) => void;
   onTxnEnd?: (info: TxnInfo, outcome: 'commit' | 'rollback') => void;
 }
@@ -124,7 +126,7 @@ export async function ingestBatch(
     const client = await pool.connect();
     const info: TxnInfo = { txn: ++txnCounter, tenantId, events: candidates.length };
     let opened = false;
-    let outcome: 'commit' | 'rollback' = 'rollback';
+    let ended = false;
     try {
       await client.query('BEGIN');
 
@@ -206,7 +208,10 @@ export async function ingestBatch(
       if (hold > 0) await sleep(hold);
 
       await client.query('COMMIT');
-      outcome = 'commit';
+      ended = true;
+      opts.onTxnEnd?.(info, 'commit');
+      const holdAfter = opts.holdAfterCommitMs ?? 0;
+      if (holdAfter > 0) await sleep(holdAfter);
       return {
         accepted: inserted.rows.length,
         duplicates: existingDuplicates,
@@ -218,7 +223,7 @@ export async function ingestBatch(
       throw err;
     } finally {
       client.release();
-      if (opened) opts.onTxnEnd?.(info, outcome);
+      if (opened && !ended) opts.onTxnEnd?.(info, 'rollback');
     }
   }
 }

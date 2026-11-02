@@ -115,7 +115,8 @@ export function createApp(deps: { pool: Pool; config: Config }): http.Server {
       const result = await ingestBatch(pool, tenant, parsed.data.events, {
         strategies: config.strategies,
         holdBeforeCommitMs: config.holdBeforeCommitMs,
-        ...(config.holdBeforeCommitMs > 0
+        holdAfterCommitMs: config.holdAfterCommitMs,
+        ...(config.holdBeforeCommitMs > 0 || config.holdAfterCommitMs > 0
           ? {
               onTxnOpen: (info) => console.log(JSON.stringify({ msg: 'txn-open', ...info })),
               onTxnEnd: (info, outcome) => console.log(JSON.stringify({ msg: 'txn-end', outcome, txn: info.txn })),

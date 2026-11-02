@@ -15,6 +15,7 @@ server.listen(config.port, config.host, () => {
       port: config.port,
       strategies: config.strategies.map((s) => s.name),
       holdBeforeCommitMs: config.holdBeforeCommitMs,
+      holdAfterCommitMs: config.holdAfterCommitMs,
     }),
   );
 });
