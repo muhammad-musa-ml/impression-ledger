@@ -44,6 +44,7 @@ interface Run {
     reportMismatches: number;
     derivedStateMismatches: number;
   };
+  report: { views: number; counted: Record<string, number>; viewsWhereTheRulesDisagree: number };
 }
 
 const files = (await readdir(dir)).filter((f) => /^run-\d+\.json$/.test(f)).sort();
@@ -68,6 +69,12 @@ const rows = runs.map((r) => {
   );
 });
 
+const countRows = runs.map(
+  (r) =>
+    `| ${r.run} | ${r.report.views} | ${r.report.counted['first-token']} | ${r.report.counted['fully-rendered']} | ` +
+    `${r.report.viewsWhereTheRulesDisagree} |`,
+);
+
 const commits = [...new Set(runs.map((r) => r.code.commit))];
 const text = `# Fault drill results
 
@@ -82,6 +89,14 @@ Each run: 2 tenants x ${first.settings.viewsPerTenant} views, batches of ${first
 ${rows.join('\n')}
 
 Columns: *deliveries* counts every event sent, repeats included. *kills* are SIGKILLs of the server process during the replay, followed by a restart; the number in brackets is how many of them had the evidence named in the header in the server's own log when the kill was sent. *failed attempts* are requests that got no usable answer because the server was down or killed. *committed under a lost reply* is the number of distinct events whose first successful write was in a request the client never saw answered. *gaps* are sent events missing from the database, *extra* are stored events nobody sent, *duplicate rows* are events stored twice under different ids. *verdict mismatches* add up the per-view, per-ad report and recomputed-from-events differences. *probe rows stored after kill* is how many rows of a single probe batch were in the database right after the server was killed in that window (0 of N is the expected answer before COMMIT, N of N after it).
+
+## What the report endpoint counted after each run
+
+| run | views | counted, first-token | counted, fully-rendered | views the two rules disagree on (designed) |
+| --- | --- | --- | --- | --- |
+${countRows.join('\n')}
+
+These come from \`GET /v1/report\` after the replay, summed over both tenants. The checker compares them ad by ad with the designed outcome of the scenarios, and a difference fails the run. The mix of scenarios is my own choice, so the share of views the two rules disagree on says nothing about real traffic.
 `;
 await writeFile(path.join(dir, 'SUMMARY.md'), text, 'utf8');
 console.log(`wrote ${path.join(dir, 'SUMMARY.md')} from ${runs.length} runs`);

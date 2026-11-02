@@ -387,6 +387,7 @@ async function runOnce(index: number, seed: number, opts: Options): Promise<Reco
   const stats = emptyStats();
   const kills: KillRecord[] = [];
   let result: CheckResult | undefined;
+  let reported: { views: number; counted: Record<string, number> } | undefined;
   const probes: ProbeRecord[] = [];
   try {
     await server.start();
@@ -429,6 +430,15 @@ async function runOnce(index: number, seed: number, opts: Options): Promise<Reco
       reports.set(tenant, (await res.json()) as Report);
     }
     result = await checkAgainstTruth(pool, dataset, strategies, reports);
+
+    // What the report endpoint said, summed over the two tenants.
+    reported = { views: 0, counted: Object.fromEntries(strategies.map((s) => [s.name, 0])) };
+    for (const report of reports.values()) {
+      for (const ad of report.ads) {
+        reported.views += ad.views;
+        for (const s of strategies) reported.counted[s.name] = (reported.counted[s.name] ?? 0) + (ad.counted[s.name] ?? 0);
+      }
+    }
   } finally {
     await server.stop();
     await pool.end().catch(() => {});
@@ -438,7 +448,7 @@ async function runOnce(index: number, seed: number, opts: Options): Promise<Reco
     await a.end();
   }
 
-  if (!result) throw new Error('the run ended without a result');
+  if (!result || !reported) throw new Error('the run ended without a result');
   const version = codeVersion();
   const withEvidence = (w: Window): number => kills.filter((k) => k.window === w && k.evidence >= 1).length;
   const pass =
@@ -503,6 +513,12 @@ async function runOnce(index: number, seed: number, opts: Options): Promise<Reco
       deadlockRetries: stats.deadlockRetries,
     },
     result,
+    report: {
+      views: reported.views,
+      counted: reported.counted,
+      // From the scenarios' designed outcomes: views that one timer start counts and the other does not.
+      viewsWhereTheRulesDisagree: dataset.views.filter((v) => v.expect['first-token'] !== v.expect['fully-rendered']).length,
+    },
   };
 }
 
