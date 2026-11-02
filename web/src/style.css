@@ -89,6 +89,9 @@ th[scope='col'] {
   color: var(--muted);
   font-weight: 600;
 }
+th[scope='row'] {
+  white-space: nowrap;
+}
 tbody th {
   font-weight: 500;
 }
