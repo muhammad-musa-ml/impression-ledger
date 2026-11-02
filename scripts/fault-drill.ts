@@ -408,9 +408,19 @@ async function runOnce(index: number, seed: number, opts: Options): Promise<Reco
         await waitFor(() => stats.batchesAcked >= target || replayDone, 120_000);
         if (replayDone) break;
         const commitsBefore = server.commits;
-        if (window === 'before-commit') await waitFor(() => server.openTransactions >= 1, 5000);
-        else await waitFor(() => server.commits > commitsBefore, 5000);
-        await sleep(Math.floor(Math.random() * (opts.hold / 2)));
+        if (window === 'before-commit') {
+          // Aim at a transaction that is open, and look again just before the signal: batches of
+          // one tenant wait for each other's view locks, so often only one or two are open and
+          // the one seen a moment ago may have committed by now.
+          for (let tries = 0; tries < 20; tries++) {
+            await waitFor(() => server.openTransactions >= 1, 5000);
+            await sleep(Math.floor(Math.random() * (opts.hold / 4)));
+            if (server.openTransactions >= 1) break;
+          }
+        } else {
+          await waitFor(() => server.commits > commitsBefore, 5000);
+          await sleep(Math.floor(Math.random() * (opts.hold / 2)));
+        }
         kills.push({
           window,
           afterBatchesAcked: stats.batchesAcked,
