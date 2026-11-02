@@ -8,6 +8,10 @@ const FRACTIONS = [0, 0.2, 0.49, 0.5, 0.51, 0.9, 1];
 /** FC_RUNS=<n> raises every run count to at least n, for a one-off wider sweep. */
 const runs = (n: number): number => Math.max(n, Number(process.env['FC_RUNS'] ?? 0));
 
+/** FC_SEED=<n> fixes the random seed, so a run can be repeated exactly. */
+const fixedSeed = process.env['FC_SEED'] === undefined ? {} : { seed: Number(process.env['FC_SEED']) };
+const params = (n: number): { numRuns: number; seed?: number } => ({ numRuns: runs(n), ...fixedSeed });
+
 const strategyArb: fc.Arbitrary<Strategy> = fc.record({
   name: fc.constant('s'),
   timerStart: fc.constantFrom('first-token' as const, 'fully-rendered' as const),
@@ -80,7 +84,7 @@ describe('properties of the counter', () => {
         const ref = referenceVerdict(events, s);
         expect({ counted: real.counted, countedAtMs: real.countedAtMs }).toEqual(ref);
       }),
-      { numRuns: runs(1500) },
+      params(1500),
     );
   });
 
@@ -93,7 +97,7 @@ describe('properties of the counter', () => {
         expect(evaluate(rotated, s)).toEqual(base);
         expect(evaluate(reversed, s)).toEqual(base);
       }),
-      { numRuns: runs(800) },
+      params(800),
     );
   });
 
@@ -103,7 +107,7 @@ describe('properties of the counter', () => {
         const some = events.filter((_, i) => (i + salt) % 3 === 0);
         expect(evaluate([...events, ...some, ...events], s)).toEqual(evaluate(events, s));
       }),
-      { numRuns: runs(800) },
+      params(800),
     );
   });
 
@@ -127,7 +131,7 @@ describe('properties of the counter', () => {
           expect(inEffect?.visibleFraction ?? 0).toBeGreaterThanOrEqual(s.threshold);
         }
       }),
-      { numRuns: runs(400) },
+      params(400),
     );
   });
 
@@ -140,7 +144,7 @@ describe('properties of the counter', () => {
         if (evaluate(events, harderThreshold).counted) expect(base).toBe(true);
         if (evaluate(events, longer).counted) expect(base).toBe(true);
       }),
-      { numRuns: runs(800) },
+      params(800),
     );
   });
 
@@ -157,7 +161,7 @@ describe('properties of the counter', () => {
         if (late.counted) expect(early.counted).toBe(true);
         if (late.counted && early.counted) expect(early.countedAtMs!).toBeLessThanOrEqual(late.countedAtMs!);
       }),
-      { numRuns: runs(800) },
+      params(800),
     );
   });
 
@@ -173,7 +177,7 @@ describe('properties of the counter', () => {
           expect(after.countedAtMs).toBe(before.countedAtMs);
         }
       }),
-      { numRuns: runs(800) },
+      params(800),
     );
   });
 });
